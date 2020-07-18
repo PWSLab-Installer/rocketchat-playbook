@@ -13,7 +13,7 @@
 - name: Add an apt key from ubuntu
   command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
   when:
-        - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu")
 
 - name: Add MongoDeb List
   lineinfile:
@@ -21,18 +21,29 @@
     line: deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse
     create: yes
   when: 
-        - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu")
 
 
-# - name: Add MongoDeb List
-#   lineinfile:
-#     path: /etc/yum.repos.d/mongodb-org-4.0.repo
-#     line: "{{ item }}"
-#     create: yes
-#   loop:
-#     - 
-#   when: 
-#         - os_check.stdout | regex_search("CentOS")
+- name: Add MongoDeb List
+  lineinfile:
+    path: /etc/yum.repos.d/mongodb-org-4.0.repo
+    line: "{{ item }}"
+    create: yes
+  loop:
+    - [mongodb-org-4.0]
+    - name=MongoDB Repository
+    - baseurl=https://repo.mongodb.org/yum/redhat/7/mongodb-org/4.0/x86_64/
+    - gpgcheck=1
+    - enabled=1
+    - gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+  when: 
+    - os_check.stdout | regex_search("CentOS")
+
+- name: Install CURL
+  become: true
+  yum: name=curl state=present
+  when:
+      - os_check.stdout | regex_search("CentOS")
 
 - name: Download Node Setup
   get_url:
@@ -41,10 +52,18 @@
   when:
     - os_check.stdout | regex_search("Ubuntu")
 
+- name: Download Node Setup
+  get_url:
+    url: https://rpm.nodesource.com/setup_12.x
+    dest: /tmp/node.sh
+  when:
+    - os_check.stdout | regex_search("CentOS")
+
 - name: Execute Node sources
   command: bash /tmp/node.sh
   when: 
-        - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Install  essential packages
   apt: name={{ item }} update_cache=yes state=present
@@ -52,7 +71,13 @@
   when:
     - os_check.stdout | regex_search("Ubuntu")
 
-- name: Install "coffee-script" node.js package globally.
+- name: Install  essential packages
+  yum: name={{ item }}  state=present
+  loop: [ 'gcc-c++',  'mongodb-org',  'nodejs', 'make', 'epel-release', 'GraphicsMagick' ]
+  when:
+    - os_check.stdout | regex_search("CentOS")
+
+- name: Install "{{ item }}" node.js package globally.
   npm:
     name: "{{ item }}"
     global: yes
@@ -61,11 +86,13 @@
     - n
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Switch to Node Version of 12.14.0
   command: n 12.14.0
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Download rocket.chat
   get_url:
@@ -73,6 +100,7 @@
     dest: /tmp/rocket.chat.tgz
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Extract rocket.chat into /tmp
   unarchive:
@@ -80,32 +108,45 @@
     dest: /tmp
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: NPM Install on Rocket Chat
   command: npm install
   args:
     chdir: /tmp/bundle/programs/server
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Processing Rocket Chat
   command: mv -f /tmp/bundle /opt/Rocket.Chat
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Adding user rocketchat
-  command: useradd -M rocketchat
+  user:
+    name: james18
+    create_home: false
+    password_lock: yes
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
 
-- name: Modiying user rocketchat
-  command: usermod -L rocketchat
-  when:
-    - os_check.stdout | regex_search("Ubuntu")
+# - name: Adding user rocketchat
+#   command: useradd -M rocketchat
+#   when:
+#     - os_check.stdout | regex_search("Ubuntu")
+
+# - name: Modiying user rocketchat
+#   command: usermod -L rocketchat
+#   when:
+#     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Adding user rocketchat
   command: chown -R rocketchat:rocketchat /opt/Rocket.Chat
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
     
 - name: Set rocketchat service file
@@ -114,16 +155,19 @@
     src: "rocketchat.service.j2"
     dest: "/lib/systemd/system/rocketchat.service"
   when:
-        - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Replace Mongo config
   command: sed -i "s/^#  engine:/  engine:\ mmapv1/"  /etc/mongod.conf
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Replace Mongo config
   command: sed -i "s/^#replication:/replication:\n  replSetName:\ rs01/" /etc/mongod.conf
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: enable mongod
@@ -133,11 +177,13 @@
     enabled: yes
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: Initiate Mongo RS
   shell: mongo --eval "printjson(rs.initiate())"
   when:
     - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("CentOS")
 
 - name: enable rocketchat
   systemd:
@@ -145,4 +191,5 @@
     state: started
     enabled: yes
   when:
+    - os_check.stdout | regex_search("CentOS")
     - os_check.stdout | regex_search("Ubuntu")
