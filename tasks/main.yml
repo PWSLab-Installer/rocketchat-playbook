@@ -85,44 +85,43 @@
     - inherits
     - n
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
 
 - name: Switch to Node Version of 12.14.0
   command: n 12.14.0
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Download rocket.chat
   get_url:
     url: https://releases.rocket.chat/latest/download
     dest: /tmp/rocket.chat.tgz
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Extract rocket.chat into /tmp
   unarchive:
     src: /tmp/rocket.chat.tgz
     dest: /tmp
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: NPM Install on Rocket Chat
   command: npm install
   args:
     chdir: /tmp/bundle/programs/server
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Processing Rocket Chat
   command: mv -f /tmp/bundle /opt/Rocket.Chat
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Adding user rocketchat
   user:
@@ -130,8 +129,8 @@
     create_home: false
     password_lock: yes
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 # - name: Adding user rocketchat
 #   command: useradd -M rocketchat
@@ -146,8 +145,8 @@
 - name: Adding user rocketchat
   command: chown -R rocketchat:rocketchat /opt/Rocket.Chat
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
     
 - name: Set rocketchat service file
   become: true
@@ -155,20 +154,20 @@
     src: "rocketchat.service.j2"
     dest: "/lib/systemd/system/rocketchat.service"
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Replace Mongo config
   command: sed -i "s/^#  engine:/  engine:\ mmapv1/"  /etc/mongod.conf
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Replace Mongo config
   command: sed -i "s/^#replication:/replication:\n  replSetName:\ rs01/" /etc/mongod.conf
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: enable mongod
   systemd:
@@ -176,14 +175,14 @@
     state: started
     enabled: yes
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: Initiate Mongo RS
   shell: mongo --eval "printjson(rs.initiate())"
   when:
-    - os_check.stdout | regex_search("Ubuntu")
-    - os_check.stdout | regex_search("CentOS")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
 
 - name: enable rocketchat
   systemd:
@@ -191,5 +190,5 @@
     state: started
     enabled: yes
   when:
-    - os_check.stdout | regex_search("CentOS")
-    - os_check.stdout | regex_search("Ubuntu")
+    - os_check.stdout | regex_search("Ubuntu") or os_check.stdout | regex_search("CentOS")
+    
