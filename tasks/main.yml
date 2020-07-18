@@ -89,7 +89,7 @@
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Processing Rocket Chat
-  command: mv /tmp/bundle /opt/Rocket.Chat
+  command: mv -f /tmp/bundle /opt/Rocket.Chat
   when:
     - os_check.stdout | regex_search("Ubuntu")
 
