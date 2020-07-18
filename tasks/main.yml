@@ -135,7 +135,7 @@
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Initiate Mongo RS
-  command: mongo --eval "printjson(rs.initiate())"
+  shell: mongo --eval "printjson(rs.initiate())"
   when:
     - os_check.stdout | regex_search("Ubuntu")
 
