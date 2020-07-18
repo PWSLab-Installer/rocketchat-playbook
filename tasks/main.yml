@@ -94,7 +94,12 @@
     - os_check.stdout | regex_search("Ubuntu")
 
 - name: Adding user rocketchat
-  command: useradd -M rocketchat && usermod -L rocketchat
+  command: useradd -M rocketchat
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Modiying user rocketchat
+  command: usermod -L rocketchat
   when:
     - os_check.stdout | regex_search("Ubuntu")
 
