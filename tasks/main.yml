@@ -6,7 +6,7 @@
 
 - name: Update Ubuntu cache
   become: true
-  apt: name=curl update_cache=yes state=present
+  apt: name=curl state=present
   when:
       - os_check.stdout | regex_search("Ubuntu")
 
