@@ -18,9 +18,13 @@
         - os_check.stdout | regex_search("Ubuntu")
 
 - name: Add MongoDeb List
-  command: echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+  lineinfile:
+    path: /etc/apt/sources.list.d/mongodb-org-4.0.list
+    line: deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse
+    create: yes
   when: 
         - os_check.stdout | regex_search("Ubuntu")
+
 
 - name: Download Node Setup
   get_url:
@@ -34,7 +38,7 @@
   when: 
         - os_check.stdout | regex_search("Ubuntu")
 
-- name: Install LEMP Packages
+- name: Install  essential packages
   apt: name={{ item }} update_cache=yes state=present
   loop: [ 'build-essential',  'mongodb-org',  'nodejs', 'graphicsmagick' ]
   when:
