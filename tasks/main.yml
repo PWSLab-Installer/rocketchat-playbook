@@ -11,9 +11,7 @@
       - os_check.stdout | regex_search("Ubuntu")
 
 - name: Add an apt key from ubuntu
-  apt_key:
-    keyserver: keyserver.ubuntu.com
-    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+  command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
   when:
         - os_check.stdout | regex_search("Ubuntu")
 
@@ -25,6 +23,16 @@
   when: 
         - os_check.stdout | regex_search("Ubuntu")
 
+
+# - name: Add MongoDeb List
+#   lineinfile:
+#     path: /etc/yum.repos.d/mongodb-org-4.0.repo
+#     line: "{{ item }}"
+#     create: yes
+#   loop:
+#     - 
+#   when: 
+#         - os_check.stdout | regex_search("CentOS")
 
 - name: Download Node Setup
   get_url:
