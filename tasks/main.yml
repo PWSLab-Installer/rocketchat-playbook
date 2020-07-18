@@ -1,5 +1,5 @@
 ---
-- name: Check the version of CentOS
+- name: Check the version of OS
   command: hostnamectl
   register: os_check
   ignore_errors: yes    
@@ -22,8 +22,15 @@
   when: 
         - os_check.stdout | regex_search("Ubuntu")
 
+- name: Download Node Setup
+  get_url:
+    url: https://deb.nodesource.com/setup_12.x
+    dest: /tmp/node.sh
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
 - name: Execute Node sources
-  command: curl -sL https://deb.nodesource.com/setup_12.x | bash -
+  command: bash /tmp/node.sh
   when: 
         - os_check.stdout | regex_search("Ubuntu")
 
