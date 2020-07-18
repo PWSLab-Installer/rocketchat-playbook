@@ -73,7 +73,7 @@
 
 - name: Install  essential packages
   yum: name={{ item }}  state=present
-  loop: [ 'gcc-c++',  'mongodb-org',  'nodejs', 'make', 'epel-release', 'GraphicsMagick' ]
+  loop: [ 'gcc-c++',  'mongodb-org', 'npm' ,'nodejs', 'make', 'epel-release', 'GraphicsMagick' ]
   when:
     - os_check.stdout | regex_search("CentOS")
 
