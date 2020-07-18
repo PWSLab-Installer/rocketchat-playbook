@@ -1,6 +1,6 @@
 ---
 - name: Check the version of CentOS
-  command: cat /etc/*release
+  command: hostnamectl
   register: os_check
   ignore_errors: yes    
 
