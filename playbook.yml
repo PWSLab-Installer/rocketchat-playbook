@@ -1,0 +1,18 @@
+- hosts: localhost
+  connection: local
+
+  vars:
+    
+
+  tasks:
+      
+    - name: Fetch RocketChat Role
+      git:
+        repo: https://ro:L6KpostvAq1vV8BVMYEy@pwslab.org/ansible/rocketchat-playbook.git
+        dest: /root/.ansible/roles/pwslab.rchat
+        version: master
+        force: yes
+
+    - name: Installing Rocketchat
+      include_role:
+        name: pwslab.rchat

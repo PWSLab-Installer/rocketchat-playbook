@@ -1,0 +1,124 @@
+---
+- name: Check the version of CentOS
+  command: cat /etc/*release
+  register: os_check
+  ignore_errors: yes    
+
+- name: Update Ubuntu cache
+  become: true
+  apt: name=curl update_cache=yes state=present
+  when:
+      - os_check.stdout | regex_search("Ubuntu")
+
+- name: Add an apt key from ubuntu
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+  when:
+        - os_check.stdout | regex_search("Ubuntu")
+
+- name: Add MongoDeb List
+  command: echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+  when: 
+        - os_check.stdout | regex_search("Ubuntu")
+
+- name: Execute Node sources
+  command: curl -sL https://deb.nodesource.com/setup_12.x | bash -
+  when: 
+        - os_check.stdout | regex_search("Ubuntu")
+
+- name: Install LEMP Packages
+  apt: name={{ item }} update_cache=yes state=present
+  loop: [ 'build-essential',  'mongodb-org',  'nodejs', 'graphicsmagick' ]
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Install "coffee-script" node.js package globally.
+  npm:
+    name: "{{ item }}"
+    global: yes
+  loop: 
+    - inherits
+    - n
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Switch to Node Version of 12.14.0
+  command: n 12.14.0
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Download rocket.chat
+  get_url:
+    url: https://releases.rocket.chat/latest/download
+    dest: /tmp/rocket.chat.tgz
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Extract rocket.chat into /tmp
+  unarchive:
+    src: /tmp/rocket.chat.tgz
+    dest: /tmp
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: NPM Install on Rocket Chat
+  command: npm install
+  args:
+    chdir: /tmp/bundle/programs/server
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Processing Rocket Chat
+  command: mv /tmp/bundle /opt/Rocket.Chat
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Adding user rocketchat
+  command: useradd -M rocketchat && usermod -L rocketchat
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Adding user rocketchat
+  command: chown -R rocketchat:rocketchat /opt/Rocket.Chat
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+    
+- name: Set rocketchat service file
+  become: true
+  template:
+    src: "rocketchat.service.j2"
+    dest: "/lib/systemd/system/rocketchat.service"
+  when:
+        - os_check.stdout | regex_search("Ubuntu")
+
+- name: Replace Mongo config
+  command: sed -i "s/^#  engine:/  engine:\ mmapv1/"  /etc/mongod.conf
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Replace Mongo config
+  command: sed -i "s/^#replication:/replication:\n  replSetName:\ rs01/" /etc/mongod.conf
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: enable mongod
+  systemd:
+    name: mongod
+    state: started
+    enabled: yes
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: Initiate Mongo RS
+  command: mongo --eval "printjson(rs.initiate())"
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
+
+- name: enable rocketchat
+  systemd:
+    name: rocketchat
+    state: started
+    enabled: yes
+  when:
+    - os_check.stdout | regex_search("Ubuntu")
