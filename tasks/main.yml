@@ -125,7 +125,7 @@
 
 - name: Adding user rocketchat
   user:
-    name: james18
+    name: rocketchat
     create_home: false
     password_lock: yes
   when:
